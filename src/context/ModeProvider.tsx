@@ -1,27 +1,8 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { useAuth } from '../auth/AuthContext'
+import { useAuth } from '../auth/useAuth'
 import { Sensors } from '../lib/sensors'
-
-export type AppMode = 'SONO' | 'ATLETA' | 'REPOUSO' | null
-
-export type ModeMetrics = {
-  steps: number
-  heartRate?: number | null
-  pressureSys?: number | null
-  pressureDia?: number | null
-  calories?: number | null
-  startedAt?: number | null
-}
-
-type ModeCtx = {
-  mode: AppMode
-  metrics: ModeMetrics
-  startMode: (m: Exclude<AppMode, null>) => Promise<void>
-  stopMode: () => Promise<void>
-}
-
-const Ctx = createContext<ModeCtx | undefined>(undefined)
+import { Ctx } from './mode-context'
 
 export function ModeProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
@@ -34,7 +15,9 @@ export function ModeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!mode) return
     setMetrics((m) => ({ ...m, startedAt: Date.now() }))
-    timerRef.current && window.clearInterval(timerRef.current)
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current)
+    }
     timerRef.current = window.setInterval(async () => {
       const [steps, hr, bp, calories] = await Promise.all([
         sensors.getStepDelta(),
@@ -89,10 +72,4 @@ export function ModeProvider({ children }: { children: React.ReactNode }) {
       {children}
     </Ctx.Provider>
   )
-}
-
-export function useMode() {
-  const v = useContext(Ctx)
-  if (!v) throw new Error('useMode must be used within ModeProvider')
-  return v
 }

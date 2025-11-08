@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from './AuthContext'
+import { useAuth } from './useAuth'
 import { supabase } from '../lib/supabaseClient'
 
 export function EnsureProfile({ children }: { children: React.ReactNode }) {

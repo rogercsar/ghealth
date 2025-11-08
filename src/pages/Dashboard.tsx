@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useAuth } from '../auth/AuthContext'
-import { calculateHealthScore } from '../lib/healthScore'
+import { useAuth } from '../auth/useAuth'
+import { useMode } from '../context/useMode'
 import AvatarDisplay, { type OrganKey } from '../components/AvatarDisplay'
 import { Link } from 'react-router-dom'
 import Card from '../components/ui/Card'
 import AlertDetailsPanel from '../components/AlertDetailsPanel'
-import { useMode } from '../context/ModeContext'
 import HealthOverview from '../components/HealthOverview' // This will be created in the next step
 
 type Severity = 'low' | 'medium' | 'high'
