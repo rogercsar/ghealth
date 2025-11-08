@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+/* Tokens do tema com fallbacks FIXOS (sem auto-referência).
+   A paleta dinâmica da logo sobrescreve estes valores em runtime via inline styles no :root. */
+@theme {
+  --color-primary: #0EA5E9;       /* azul fallback */
+  --color-primary-dark: #0284C7;  /* azul escuro fallback */
+  --color-secondary: #9333EA;     /* roxo fallback */
+  --color-accent: #F59E0B;        /* âmbar fallback */
+  --color-muted: #64748B;         /* cinza fallback */
+}
+
+/* Variáveis de tema para claro/escuro */
+:root {
+  --bg: #ffffff;
+  --bg-muted: #f7fafc;
+  --bg-card: #ffffff;
+  --text: #0b1020;
+  --text-muted: #64748b;
+  --border: #e5e7eb;
+  --primary: var(--color-primary);
+  --primary-contrast: #ffffff; /* ajustado dinamicamente em palette.ts quando possível */
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e0f13;
+  --bg-muted: #111318;
+  --bg-card: #0f1115;
+  --text: #e5e7eb;
+  --text-muted: #a3aab9;
+  --border: #1f2937;
+  --primary: var(--color-primary);
+  --primary-contrast: #ffffff;
+}
+
+/* Estilos base e fontes */
+html, body, #root { height: 100%; }
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  display: flex;
+  place-items: center;
+}
+
+h1, h2, h3, .heading { font-family: Poppins, Inter, ui-sans-serif, system-ui; }

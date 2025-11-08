@@ -1,0 +1,98 @@
+import { Link, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+
+export default function Shell({ children }: { children: React.ReactNode }) {
+  const location = useLocation()
+  const [theme, setTheme] = useState<'light'|'dark'>(() => {
+    const saved = localStorage.getItem('theme') as 'light'|'dark'|null
+    if (saved) return saved
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  })
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    localStorage.setItem('theme', theme)
+  }, [theme])
+
+  const nav = [
+    { to: '/dashboard', label: 'Dashboard' },
+    { to: '/tracking', label: 'Tracking' },
+    { to: '/exams', label: 'Exames' },
+    { to: '/profile', label: 'Perfil' },
+  ]
+  return (
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] grid grid-cols-[0_1fr] md:grid-cols-[240px_1fr] overflow-x-hidden">
+      {/* Sidebar (desktop) */}
+      <aside className="hidden md:flex md:flex-col border-r border-[var(--border)] bg-[var(--bg-muted)]">
+        <div className="h-16 flex items-center justify-center">
+          <img src="/ghealth_logo.png" alt="GHealth" className="h-10 w-10 object-contain" />
+        </div>
+        <nav className="mt-2 grid gap-1 px-2">
+          {nav.map((i) => {
+            const active = location.pathname.startsWith(i.to)
+            return (
+              <Link key={i.to} to={i.to} className={`${active ? 'bg-[var(--primary)] text-[var(--primary-contrast)]' : 'text-[var(--text-muted)] hover:bg-[var(--bg-muted)]'} rounded-xl h-10 px-3 flex items-center justify-start transition-colors`}>
+                <span className="text-sm font-medium">{i.label}</span>
+              </Link>
+            )
+          })}
+        </nav>
+        <div className="mt-auto p-3">
+          <Link to="/login" className="block rounded-xl h-10 px-3 bg-[var(--bg-muted)] text-[var(--text)] text-sm font-medium text-center leading-10 hover:bg-[var(--bg-card)] border border-[var(--border)]">Sair</Link>
+        </div>
+      </aside>
+
+      {/* Mobile drawer */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden" onClick={() => setSidebarOpen(false)}>
+          <div className="absolute inset-0 bg-black/30" />
+          <div className="relative w-64 h-full bg-[var(--bg-muted)] border-r border-[var(--border)] shadow-lg">
+            <div className="h-16 flex items-center justify-between px-4">
+              <img src="/ghealth_logo.png" alt="GHealth" className="h-10 w-10 object-contain" />
+              <button onClick={() => setSidebarOpen(false)} className="h-10 w-10 rounded-lg bg-[var(--bg-card)] border border-[var(--border)]">✕</button>
+            </div>
+            <nav className="mt-2 grid gap-1 px-2">
+              {nav.map((i) => {
+                const active = location.pathname.startsWith(i.to)
+                return (
+                  <Link key={i.to} to={i.to} onClick={() => setSidebarOpen(false)} className={`${active ? 'bg-[var(--primary)] text-[var(--primary-contrast)]' : 'text-[var(--text)] hover:bg-[var(--bg-card)]'} rounded-xl h-10 px-3 flex items-center transition-colors`}>
+                    <span className="text-sm font-medium">{i.label}</span>
+                  </Link>
+                )
+              })}
+            </nav>
+            <div className="mt-auto p-3">
+              <Link to="/login" onClick={() => setSidebarOpen(false)} className="block rounded-xl h-10 px-3 bg-[var(--bg-muted)] text-[var(--text)] text-sm font-medium text-center leading-10 hover:bg-[var(--bg-card)] border border-[var(--border)]">Sair</Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="min-h-screen">
+        {/* Topbar */}
+        <header className="h-16 border-b border-[var(--border)] flex items-center justify-between px-6 bg-[color:var(--bg-muted)]/70 backdrop-blur">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setSidebarOpen(true)} className="md:hidden h-10 w-10 rounded-lg bg-[var(--bg-muted)] border border-[var(--border)] hover:bg-[var(--bg-card)]" title="Menu">☰</button>
+            <span className="text-xl font-semibold bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(90deg, var(--brand-1,#0EA5E9), var(--brand-3,#F59E0B))' }}>GHealth</span>
+            <div className="hidden md:flex items-center bg-[var(--bg-muted)] border border-[var(--border)] rounded-lg px-3 py-2 w-[320px]">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-60"><path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="2"/></svg>
+              <input className="bg-transparent text-[var(--text)] text-sm outline-none w-full ml-2" placeholder="Buscar..." />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="h-10 px-3 rounded-lg bg-[var(--bg-muted)] border border-[var(--border)] hover:bg-[var(--bg-card)]" title="Tema">
+              {theme === 'dark' ? '🌙' : '☀️'}
+            </button>
+            <button className="h-10 w-10 rounded-lg bg-[var(--bg-muted)] border border-[var(--border)] hover:bg-[var(--bg-card)]" title="Notificações">🔔</button>
+            <button className="h-10 w-10 rounded-lg bg-[var(--bg-muted)] border border-[var(--border)] hover:bg-[var(--bg-card)]" title="Dispositivos">📱</button>
+            <img src="/ghealth_logo.png" alt="avatar" className="h-9 w-9 rounded-lg border border-[var(--border)]" />
+          </div>
+        </header>
+        <main className="p-6 overflow-x-hidden">
+          {children}
+        </main>
+      </div>
+    </div>
+  )
+}
