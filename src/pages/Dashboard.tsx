@@ -6,21 +6,22 @@ import { Link } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
 import Section from '../components/ui/Section'
+import Tabs from '../components/ui/Tabs'
+import StatGauge from '../components/ui/StatGauge'
 import AlertDetailsPanel from '../components/AlertDetailsPanel'
 import { useMode } from '../context/ModeContext'
-import HealthOverview from '../components/HealthOverview'
 
-type Alert = { organ: OrganKey; severity: 'low' | 'medium' | 'high'; label: string }
-type OrganAlerts = Record<OrganKey, { count: number; high: number; medium: number; low: number }>
+type Severity = 'low' | 'medium' | 'high'
 
 export default function Dashboard() {
   const { user } = useAuth()
   const { mode, metrics, startMode, stopMode } = useMode()
   const [score, setScore] = useState<number | null>(null)
+  const [activeTab, setActiveTab] = useState('heart')
   const [alertKey, setAlertKey] = useState<string | null>(null)
   const [alertValue, setAlertValue] = useState<number | string | null>(null)
   const [selectedOrgan, setSelectedOrgan] = useState<OrganKey | null>(null)
-  const [availableOrgans, setAvailableOrgans] = useState<OrganAlerts>({
+  const [availableOrgans, setAvailableOrgans] = useState<Record<OrganKey, { count: number; high: number; medium: number; low: number }>>({
     heart: { count: 0, high: 0, medium: 0, low: 0 },
     brain: { count: 0, high: 0, medium: 0, low: 0 },
     kidneys: { count: 0, high: 0, medium: 0, low: 0 },
@@ -28,6 +29,7 @@ export default function Dashboard() {
     metabolism: { count: 0, high: 0, medium: 0, low: 0 },
   })
 
+  // Persistir seleção
   useEffect(() => {
     const saved = localStorage.getItem('selectedOrgan') as OrganKey | null
     if (saved) setSelectedOrgan(saved)
@@ -36,6 +38,7 @@ export default function Dashboard() {
     if (selectedOrgan) localStorage.setItem('selectedOrgan', selectedOrgan)
   }, [selectedOrgan])
 
+
   const organLabels: Record<OrganKey, string> = {
     heart: 'Coração',
     brain: 'Cérebro',
@@ -43,6 +46,7 @@ export default function Dashboard() {
     eyes: 'Olhos',
     metabolism: 'Metabolismo',
   }
+
 
   useEffect(() => {
     const load = async () => {
@@ -53,12 +57,21 @@ export default function Dashboard() {
     load()
   }, [user])
 
+  useEffect(() => {
+    const saved = localStorage.getItem('selectedOrgan') as OrganKey | null
+    if (saved) setSelectedOrgan(saved)
+  }, [])
+
+  useEffect(() => {
+    if (selectedOrgan) localStorage.setItem('selectedOrgan', selectedOrgan)
+  }, [selectedOrgan])
+
   const organsWithAlerts = useMemo(() => (
     (Object.keys(availableOrgans) as OrganKey[]).filter(k => availableOrgans[k].count > 0)
   ), [availableOrgans])
 
-  const handleAlertsComputed = (alerts: Alert[]) => {
-    const acc: OrganAlerts = {
+  function mapAlertsToOrgans(alerts: { organ: OrganKey; severity: Severity; label: string }[]) {
+    const acc: Record<OrganKey, { count: number; high: number; medium: number; low: number }> = {
       heart: { count: 0, high: 0, medium: 0, low: 0 },
       brain: { count: 0, high: 0, medium: 0, low: 0 },
       kidneys: { count: 0, high: 0, medium: 0, low: 0 },
@@ -70,97 +83,115 @@ export default function Dashboard() {
       acc[a.organ][a.severity] += 1
     })
     setAvailableOrgans(acc)
-    if (selectedOrgan && acc[selectedOrgan]?.count === 0) {
-      setSelectedOrgan(null)
-    }
+    return acc
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-8">
       <Section
-        title="Seu Avatar de Saúde"
-        description="Uma visão interativa e em tempo real do seu bem-estar."
+        title="Dashboard"
+        description="Visão geral com mapa corporal, métricas e modos"
+        actions={(
+          <div className="flex gap-2">
+            <Link to="/tracking"><Button variant="outline" size="md">Tracking diário</Button></Link>
+            <Link to="/exams"><Button size="md">Adicionar exame</Button></Link>
+          </div>
+        )}
       >
-        <div className="grid md:grid-cols-5 gap-8 mt-4">
+        {/* Navegação por categorias */}
+        <Tabs
+          items={[
+            { key: 'heart', label: 'Coração' },
+            { key: 'brain', label: 'Cérebro' },
+            { key: 'kidneys', label: 'Rins' },
+            { key: 'eyes', label: 'Olhos' },
+          ]}
+          active={activeTab}
+          onChange={setActiveTab}
+        />
 
-          {/* Coluna Principal - Avatar */}
-          <div className="md:col-span-3">
-            <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <div className="flex items-center justify-center p-4">
+        {/* Cards principais */}
+        <div className="grid md:grid-cols-3 gap-6 mt-4">
+          <Card title="Health Score" subtitle="Baseado em IMC, hábitos e glicose">
+            <div className="text-6xl font-bold text-primary">{score ?? '--'}</div>
+            <div className="mt-3 h-2 rounded-full bg-slate-200">
+              <div className="h-2 rounded-full bg-primary" style={{ width: `${(score ?? 0)}%` }} />
+            </div>
+            <div className="mt-4 space-y-3">
+              <StatGauge label="Passos (hoje)" value={metrics.steps} min={0} max={10000} />
+              <StatGauge label="FC (bpm)" value={metrics.heartRate ?? 0} min={40} max={160} />
+            </div>
+            <div className="mt-4 flex gap-2">
+              {!mode ? (
+                <>
+                  <Button variant="subtle" onClick={() => startMode('SONO')}>Modo Sono</Button>
+                  <Button variant="primary" onClick={() => startMode('ATLETA')}>Modo Atleta</Button>
+                  <Button variant="outline" onClick={() => startMode('REPOUSO')}>Modo Repouso</Button>
+                </>
+              ) : (
+                <Button variant="danger" onClick={stopMode}>Encerrar modo</Button>
+              )}
+            </div>
+          </Card>
+
+          <Card title="Mapa corporal" subtitle="Clique nos pontos ou no sumário à direita" className="md:col-span-2">
+            <div className="mt-2 grid md:grid-cols-2 gap-4">
+              <div className="flex items-center justify-center">
                 <AvatarDisplay
                   selectedOrgan={selectedOrgan}
                   onAlertClick={(k, v) => { setAlertKey(k); setAlertValue(v ?? null) }}
-                  onAlertsComputed={handleAlertsComputed}
+                  onAlertsComputed={(alerts) => {
+                    const counts = mapAlertsToOrgans(alerts)
+                    if (selectedOrgan && counts[selectedOrgan].count === 0) setSelectedOrgan(null)
+                  }}
                 />
               </div>
-              {alertKey && (
-                <div className="p-4 border-t border-slate-200">
-                  <AlertDetailsPanel alertKey={alertKey} value={alertValue} onClose={() => setAlertKey(null)} />
-                </div>
-              )}
-            </Card>
-          </div>
-
-          {/* Coluna Secundária - Health Score e Ações */}
-          <div className="md:col-span-2 space-y-6">
-            <HealthOverview
-              score={score}
-              metrics={{ ...metrics, heartRate: metrics.heartRate ?? null }}
-              mode={mode}
-              onStartMode={(m) => startMode(m)}
-              onStopMode={stopMode}
-            />
-
-            <Card>
-              <h3 className="font-bold text-lg mb-3">Sumário de Alertas</h3>
-              {organsWithAlerts.length === 0 ? (
-                <p className="text-sm text-slate-500">Sem alertas no momento. Ótimo trabalho!</p>
-              ) : (
-                <ul className="space-y-3">
-                  {organsWithAlerts.map((org) => (
-                    <li key={org}>
-                      <button
-                        className={`w-full text-left p-3 rounded-lg transition-colors ${selectedOrgan === org ? 'bg-primary-light text-primary-dark' : 'hover:bg-slate-50'}`}
-                        onClick={() => setSelectedOrgan(org)}
-                      >
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold">{organLabels[org]}</span>
-                          <div className="flex items-center gap-2">
-                            {['high', 'medium', 'low'].map((sev) => {
-                              const count = availableOrgans[org][sev as 'high' | 'medium' | 'low'];
-                              if (count > 0) {
-                                const severityClasses = {
-                                  high: 'bg-red-500',
-                                  medium: 'bg-orange-400',
-                                  low: 'bg-amber-400',
-                                };
-                                return (
-                                  <span key={sev} title={`${count} alerta(s) ${sev}`} className={`h-3 w-3 rounded-full ${severityClasses[sev as 'high' | 'medium' | 'low']}`} />
-                                );
-                              }
-                              return null;
-                            })}
-                          </div>
+              <div className="space-y-2">
+                <div className="text-sm text-[var(--text-muted)]">Sumário</div>
+                {organsWithAlerts.length === 0 ? (
+                  <div className="text-xs text-[var(--text-muted)]">Sem alertas no momento</div>
+                ) : (
+                  <ul className="space-y-2">
+                    {organsWithAlerts.map((org) => (
+                      <li key={org} className="flex items-center justify-between">
+                        <button className={`text-left hover:underline ${selectedOrgan === org ? 'text-primary' : 'text-slate-700'}`} onClick={() => setSelectedOrgan(org)}>
+                          {organLabels[org]}
+                        </button>
+                        <div className="flex items-center gap-2">
+                          {(['high', 'medium', 'low'] as (keyof typeof availableOrgans[OrganKey])[]).map((sev) => availableOrgans[org][sev] > 0 && (
+                            <span key={sev as string} title={`${availableOrgans[org][sev]} alerta(s) ${sev as string}`} className={`inline-flex items-center px-2 py-0.5 text-xs border rounded ${sev === 'high' ? 'bg-red-100 text-red-700 border-red-300' : sev === 'medium' ? 'bg-orange-100 text-orange-700 border-orange-300' : 'bg-amber-100 text-amber-700 border-amber-300'}`}>
+                              {availableOrgans[org][sev]}
+                            </span>
+                          ))}
                         </div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card>
-
-            <div className="space-y-3">
-              <Link to="/exams" className="block">
-                <Button className="w-full">Adicionar Exame</Button>
-              </Link>
-              <Link to="/tracking" className="block">
-                <Button variant="outline" className="w-full">Tracking Diário</Button>
-              </Link>
-              <Link to="/profile" className="block">
-                <Button variant="subtle" className="w-full">Atualizar Perfil</Button>
-              </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
-          </div>
+            {alertKey && (
+              <div className="mt-4">
+                <AlertDetailsPanel alertKey={alertKey} value={alertValue} onClose={() => setAlertKey(null)} />
+              </div>
+            )}
+          </Card>
+        </div>
+
+        {/* Ações e links úteis */}
+        <div className="grid md:grid-cols-3 gap-6">
+          {[
+            { t: 'Atualizar Perfil', d: 'Informe altura, peso, sexo e nascimento', to: '/profile' },
+            { t: 'Registrar hábitos', d: 'Passos, sono e frequência cardíaca', to: '/tracking' },
+            { t: 'Meus exames', d: 'Adicione laudos e valores com unidade', to: '/exams' },
+          ].map((i, idx) => (
+            <Link key={idx} to={i.to}>
+              <Card>
+                <div className="font-medium">{i.t}</div>
+                <div className="text-slate-600 text-sm">{i.d}</div>
+              </Card>
+            </Link>
+          ))}
         </div>
       </Section>
     </div>
