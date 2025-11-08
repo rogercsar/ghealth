@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../auth/AuthContext'
 
@@ -162,52 +162,54 @@ export default function AvatarDisplay({ onAlertClick, selectedOrgan, onAlertsCom
     metabolism: { x: 110, y: 150, label: 'Metabolismo' },
   }
 
-  // Calcular alertas adicionais baseados em tracking e perfil
-  const bmiAlert = (() => {
-    const h = profile?.altura_cm && profile.altura_cm > 0 ? profile.altura_cm / 100 : null
-    const p = profile?.peso_kg ?? null
-    if (!h || !p) return null
-    const imc = p / (h * h)
-    const sev: Severity | null = imc >= 30 ? 'high' : imc > 25 ? 'medium' : null
-    return sev ? { x: 110, y: 160, label: 'IMC', color: severityColor(sev), value: Math.round(imc * 10) / 10, organ: 'metabolism' as OrganKey, severity: sev } : null
-  })()
+  const alerts = useMemo(() => {
+    // Calcular alertas adicionais baseados em tracking e perfil
+    const bmiAlert = (() => {
+      const h = profile?.altura_cm && profile.altura_cm > 0 ? profile.altura_cm / 100 : null
+      const p = profile?.peso_kg ?? null
+      if (!h || !p) return null
+      const imc = p / (h * h)
+      const sev: Severity | null = imc >= 30 ? 'high' : imc > 25 ? 'medium' : null
+      return sev ? { x: 110, y: 160, label: 'IMC', color: severityColor(sev), value: Math.round(imc * 10) / 10, organ: 'metabolism' as OrganKey, severity: sev } : null
+    })()
 
-  const hrAlert = (() => {
-    const f = tracking?.freq_cardiaca ?? null
-    if (!f) return null
-    const sev: Severity | null = (f < 45 || f > 120) ? 'high' : (f < 50 || f > 100) ? 'medium' : null
-    return sev ? { x: 110, y: 110, label: 'FC', color: severityColor(sev), value: f, organ: 'heart' as OrganKey, severity: sev } : null
-  })()
+    const hrAlert = (() => {
+      const f = tracking?.freq_cardiaca ?? null
+      if (!f) return null
+      const sev: Severity | null = (f < 45 || f > 120) ? 'high' : (f < 50 || f > 100) ? 'medium' : null
+      return sev ? { x: 110, y: 110, label: 'FC', color: severityColor(sev), value: f, organ: 'heart' as OrganKey, severity: sev } : null
+    })()
 
-  const sleepAlert = (() => {
-    const s = tracking?.horas_sono ?? null
-    if (s === null || s === undefined) return null
-    const sev: Severity | null = s < 5 ? 'high' : s < 6 ? 'medium' : null
-    return sev ? { x: 110, y: 60, label: 'Sono', color: severityColor(sev), value: s, organ: 'brain' as OrganKey, severity: sev } : null
-  })()
+    const sleepAlert = (() => {
+      const s = tracking?.horas_sono ?? null
+      if (s === null || s === undefined) return null
+      const sev: Severity | null = s < 5 ? 'high' : s < 6 ? 'medium' : null
+      return sev ? { x: 110, y: 60, label: 'Sono', color: severityColor(sev), value: s, organ: 'brain' as OrganKey, severity: sev } : null
+    })()
 
-  const stepsAlert = (() => {
-    const p = tracking?.passos ?? null
-    if (p === null || p === undefined) return null
-    const sev: Severity | null = p < 3000 ? 'high' : p < 5000 ? 'medium' : null
-    return sev ? { x: 110, y: 260, label: 'Passos', color: severityColor(sev), value: p, organ: 'metabolism' as OrganKey, severity: sev } : null
-  })()
+    const stepsAlert = (() => {
+      const p = tracking?.passos ?? null
+      if (p === null || p === undefined) return null
+      const sev: Severity | null = p < 3000 ? 'high' : p < 5000 ? 'medium' : null
+      return sev ? { x: 110, y: 260, label: 'Passos', color: severityColor(sev), value: p, organ: 'metabolism' as OrganKey, severity: sev } : null
+    })()
 
-  const examAlerts = records.map((rec) => {
-    const sev = computeExamSeverity(rec.tipo_exame, rec.valor, profile?.sexo ?? null)
-    const organ = organForTipo(rec.tipo_exame)
-    if (!sev || !organ) return null
-    const pos = regionForExam(rec.tipo_exame)
-    return { ...pos, label: rec.tipo_exame, color: severityColor(sev), value: rec.valor ?? null, organ, severity: sev }
-  }).filter(Boolean) as { x: number; y: number; label: string; color: string; value?: number | null; organ: OrganKey; severity: Severity }[]
+    const examAlerts = records.map((rec) => {
+      const sev = computeExamSeverity(rec.tipo_exame, rec.valor, profile?.sexo ?? null)
+      const organ = organForTipo(rec.tipo_exame)
+      if (!sev || !organ) return null
+      const pos = regionForExam(rec.tipo_exame)
+      return { ...pos, label: rec.tipo_exame, color: severityColor(sev), value: rec.valor ?? null, organ, severity: sev }
+    }).filter(Boolean) as { x: number; y: number; label: string; color: string; value?: number | null; organ: OrganKey; severity: Severity }[]
 
-  const alerts: AlertPoint[] = [
-    bmiAlert as AlertPoint | null,
-    hrAlert as AlertPoint | null,
-    sleepAlert as AlertPoint | null,
-    stepsAlert as AlertPoint | null,
-    ...examAlerts,
-  ].filter(Boolean) as AlertPoint[]
+    return [
+      bmiAlert as AlertPoint | null,
+      hrAlert as AlertPoint | null,
+      sleepAlert as AlertPoint | null,
+      stepsAlert as AlertPoint | null,
+      ...examAlerts,
+    ].filter(Boolean) as AlertPoint[]
+  }, [records, profile, tracking])
 
   // notificar pai sobre os alertas
   useEffect(() => {
