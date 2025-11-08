@@ -210,9 +210,15 @@ export default function AvatarDisplay({ onAlertClick, selectedOrgan, onAlertsCom
   ].filter(Boolean) as AlertPoint[]
 
   // notificar pai sobre os alertas
-  if (onAlertsComputed) {
-    try { onAlertsComputed(alerts) } catch {}
-  }
+  useEffect(() => {
+    if (onAlertsComputed) {
+      try {
+        onAlertsComputed(alerts)
+      } catch (err) {
+        console.error('Error in onAlertsComputed:', err)
+      }
+    }
+  }, [alerts, onAlertsComputed])
 
   return (
     <div className="flex flex-col items-center">
