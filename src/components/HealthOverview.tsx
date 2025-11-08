@@ -1,8 +1,7 @@
-import React from 'react'
 import Button from './ui/Button'
 import Card from './ui/Card'
 import StatGauge from './ui/StatGauge'
-import { Mode } from '../context/ModeContext'
+import type { AppMode } from '../context/ModeContext'
 
 interface Metrics {
   steps: number
@@ -12,8 +11,8 @@ interface Metrics {
 interface HealthOverviewProps {
   score: number | null
   metrics: Metrics
-  mode: Mode | null
-  onStartMode: (mode: Mode) => void
+  mode: AppMode | null
+  onStartMode: (mode: 'SONO' | 'ATLETA' | 'REPOUSO') => void
   onStopMode: () => void
 }
 

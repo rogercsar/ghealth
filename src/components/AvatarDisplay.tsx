@@ -29,20 +29,6 @@ function severityColor(s: Severity) {
   return s === 'high' ? '#ef4444' : s === 'medium' ? '#f97316' : '#f59e0b'
 }
 
-function isOutOfRange(rec: { tipo_exame: string; valor: number | null }) {
-  const label = rec.tipo_exame.toLowerCase()
-  const v = rec.valor ?? 0
-  if (label.includes('glicose') || label.includes('glucose')) return v > 100
-  if (label.includes('hemoglobina') && label.includes('glicada')) return v >= 5.7
-  if (label.includes('colesterol')) return v > 200
-  if (label.includes('triglicer')) return v > 150
-  if (label.includes('creatinina')) return v > 1.3
-  if (label.includes('ureia')) return v > 45
-  if (label.includes('press') || label.includes('pa')) return v >= 140
-  if (label.includes('ecg')) return v > 0
-  return false
-}
-
 function regionForExam(tipo: string) {
   const t = tipo.toLowerCase()
   if (t.includes('glicose') || t.includes('glucose')) return { x: 110, y: 150 }
@@ -66,7 +52,7 @@ function FemaleSilhouette() {
   )
 }
 
-function computeExamSeverity(label: string, value: number | null, unit: string | null, sexo: string | null): Severity | null {
+function computeExamSeverity(label: string, value: number | null, sexo: string | null): Severity | null {
   const v = value ?? 0
   const l = label.toLowerCase()
   // glicose (mg/dL)
@@ -208,7 +194,7 @@ export default function AvatarDisplay({ onAlertClick, selectedOrgan, onAlertsCom
   })()
 
   const examAlerts = records.map((rec) => {
-    const sev = computeExamSeverity(rec.tipo_exame, rec.valor, rec.unidade, profile?.sexo ?? null)
+    const sev = computeExamSeverity(rec.tipo_exame, rec.valor, profile?.sexo ?? null)
     const organ = organForTipo(rec.tipo_exame)
     if (!sev || !organ) return null
     const pos = regionForExam(rec.tipo_exame)

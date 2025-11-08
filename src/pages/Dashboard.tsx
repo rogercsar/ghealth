@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { calculateHealthScore } from '../lib/healthScore'
 import AvatarDisplay, { type OrganKey } from '../components/AvatarDisplay'
@@ -10,6 +10,9 @@ import AlertDetailsPanel from '../components/AlertDetailsPanel'
 import { useMode } from '../context/ModeContext'
 import HealthOverview from '../components/HealthOverview'
 
+type Alert = { organ: OrganKey; severity: 'low' | 'medium' | 'high'; label: string }
+type OrganAlerts = Record<OrganKey, { count: number; high: number; medium: number; low: number }>
+
 export default function Dashboard() {
   const { user } = useAuth()
   const { mode, metrics, startMode, stopMode } = useMode()
@@ -17,7 +20,7 @@ export default function Dashboard() {
   const [alertKey, setAlertKey] = useState<string | null>(null)
   const [alertValue, setAlertValue] = useState<number | string | null>(null)
   const [selectedOrgan, setSelectedOrgan] = useState<OrganKey | null>(null)
-  const [availableOrgans, setAvailableOrgans] = useState<Record<OrganKey, { count: number; high: number; medium: number; low: number }>>({
+  const [availableOrgans, setAvailableOrgans] = useState<OrganAlerts>({
     heart: { count: 0, high: 0, medium: 0, low: 0 },
     brain: { count: 0, high: 0, medium: 0, low: 0 },
     kidneys: { count: 0, high: 0, medium: 0, low: 0 },
@@ -54,8 +57,8 @@ export default function Dashboard() {
     (Object.keys(availableOrgans) as OrganKey[]).filter(k => availableOrgans[k].count > 0)
   ), [availableOrgans])
 
-  function mapAlertsToOrgans(alerts: { organ: OrganKey; severity: 'low' | 'medium' | 'high'; label: string }[]) {
-    const acc: Record<OrganKey, { count: number; high: number; medium: number; low: number }> = {
+  const handleAlertsComputed = (alerts: Alert[]) => {
+    const acc: OrganAlerts = {
       heart: { count: 0, high: 0, medium: 0, low: 0 },
       brain: { count: 0, high: 0, medium: 0, low: 0 },
       kidneys: { count: 0, high: 0, medium: 0, low: 0 },
@@ -67,7 +70,7 @@ export default function Dashboard() {
       acc[a.organ][a.severity] += 1
     })
     setAvailableOrgans(acc)
-    if (selectedOrgan && acc[selectedOrgan].count === 0) {
+    if (selectedOrgan && acc[selectedOrgan]?.count === 0) {
       setSelectedOrgan(null)
     }
   }
@@ -87,7 +90,7 @@ export default function Dashboard() {
                 <AvatarDisplay
                   selectedOrgan={selectedOrgan}
                   onAlertClick={(k, v) => { setAlertKey(k); setAlertValue(v ?? null) }}
-                  onAlertsComputed={mapAlertsToOrgans}
+                  onAlertsComputed={handleAlertsComputed}
                 />
               </div>
               {alertKey && (
@@ -102,9 +105,9 @@ export default function Dashboard() {
           <div className="md:col-span-2 space-y-6">
             <HealthOverview
               score={score}
-              metrics={metrics}
+              metrics={{ ...metrics, heartRate: metrics.heartRate ?? null }}
               mode={mode}
-              onStartMode={startMode}
+              onStartMode={(m) => startMode(m)}
               onStopMode={stopMode}
             />
 
