@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../auth/useAuth'
 import { Sensors } from '../lib/sensors'
-import { Ctx } from './mode-context'
+import { Ctx, type AppMode, type ModeMetrics } from './mode-context'
 
 export function ModeProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
@@ -14,7 +14,7 @@ export function ModeProvider({ children }: { children: React.ReactNode }) {
   // coleta periódica quando em modo ativo
   useEffect(() => {
     if (!mode) return
-    setMetrics((m) => ({ ...m, startedAt: Date.now() }))
+    setMetrics((m: ModeMetrics) => ({ ...m, startedAt: Date.now() }))
     if (timerRef.current) {
       window.clearInterval(timerRef.current)
     }
@@ -25,7 +25,7 @@ export function ModeProvider({ children }: { children: React.ReactNode }) {
         sensors.readBloodPressure(),
         sensors.estimateCalories(mode),
       ])
-      setMetrics((m) => ({
+      setMetrics((m: ModeMetrics) => ({
         ...m,
         steps: m.steps + (steps ?? 0),
         heartRate: hr ?? m.heartRate ?? null,

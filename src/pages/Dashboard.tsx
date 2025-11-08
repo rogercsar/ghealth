@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../auth/useAuth'
 import { useMode } from '../context/useMode'
+import { calculateHealthScore } from '../lib/healthScore'
 import AvatarDisplay, { type OrganKey } from '../components/AvatarDisplay'
 import { Link } from 'react-router-dom'
 import Card from '../components/ui/Card'
