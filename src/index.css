@@ -12,12 +12,12 @@
 
 /* Variáveis de tema para claro/escuro */
 :root {
-  --bg: #ffffff;
-  --bg-muted: #f7fafc;
-  --bg-card: #ffffff;
+  --bg: #e9edf2;          /* fundo global menos brilhante */
+  --bg-muted: #e3e7ee;     /* superfícies sutis */
+  --bg-card: #f2f4f7;      /* cartões com leve contraste */
   --text: #0b1020;
   --text-muted: #64748b;
-  --border: #e5e7eb;
+  --border: #c9d0dc;       /* borda um pouco mais marcada para contraste com sombras */
   --primary: var(--color-primary);
   --primary-contrast: #ffffff; /* ajustado dinamicamente em palette.ts quando possível */
 }

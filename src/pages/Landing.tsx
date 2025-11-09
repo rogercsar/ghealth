@@ -2,9 +2,9 @@ import { Link } from 'react-router-dom'
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-slate-50">
+    <div className="min-h-screen bg-[var(--bg)]">
       {/* Header público */}
-      <header className="sticky top-0 bg-white/80 backdrop-blur z-10 border-b">
+      <header className="sticky top-0 bg-[var(--bg-card)]/80 backdrop-blur z-10 border-b">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <img src="/ghealth_logo.png" alt="GHealth" className="h-8 w-8 object-contain rounded" />
@@ -34,24 +34,21 @@ export default function Landing() {
           </p>
           <div className="mt-6 flex gap-3">
             <Link to="/signup" className="px-5 py-3 rounded bg-[var(--primary)] text-[var(--primary-contrast)] hover:bg-[var(--color-primary-dark)]">Começar agora</Link>
-            <Link to="/login" className="px-5 py-3 rounded border hover:bg-slate-100">Já tenho conta</Link>
+            <Link to="/login" className="px-5 py-3 rounded border hover:bg-[var(--bg-muted)]">Já tenho conta</Link>
           </div>
         </div>
         <div className="relative">
           <div className="absolute -inset-6 bg-gradient-to-tr from-primary/20 to-sky-200 rounded-3xl blur-xl" />
-          <div className="relative overflow-hidden bg-white border rounded-2xl p-6 shadow-sm">
+          <div className="relative overflow-hidden bg-[var(--bg-card)] border rounded-2xl p-6 shadow-md hover:shadow-lg transition-shadow">
             <div className="text-sm text-slate-600">Exemplo de painel</div>
             <div className="mt-3 grid sm:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-slate-50">
+              <div className="p-4 rounded-xl bg-[var(--bg-card)] shadow-sm">
                 <div className="text-slate-500 text-xs">Health Score</div>
                 <div className="text-3xl font-bold text-primary">82</div>
               </div>
-              <div className="p-4 rounded-xl bg-slate-50">
+              <div className="p-4 rounded-xl bg-[var(--bg-card)] shadow-sm">
                 <div className="text-slate-500 text-xs">Passos hoje</div>
-                <div className="text-3xl font-bold">7.540</div>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-50 col-span-2">
-                <div className="h-32 bg-gradient-to-r from-slate-200 to-slate-100 rounded-lg" />
+                <div className="text-3xl font-bold text-primary">8.511</div>
               </div>
             </div>
           </div>
@@ -88,7 +85,7 @@ export default function Landing() {
             'Políticas de segurança (RLS) por usuário',
             'Compatível com Web e Android (Capacitor)'
           ].map((t, i) => (
-            <div key={i} className="p-6 rounded-xl border bg-white">
+            <div key={i} className="p-6 rounded-xl border bg-[var(--bg-card)] shadow-sm hover:shadow-md transition-shadow">
               <div className="font-medium">{t}</div>
             </div>
           ))}
@@ -104,7 +101,7 @@ export default function Landing() {
             { n: 'Carlos', d: 'O alerta me ajudou a procurar o médico cedo.' },
             { n: 'Marina', d: 'Acompanhar passos e sono me motivou bastante.' },
           ].map((i, idx) => (
-            <div key={idx} className="p-6 rounded-xl border bg-white">
+            <div key={idx} className="p-6 rounded-xl border bg-[var(--bg-card)] shadow-sm hover:shadow-md transition-shadow">
               <div className="font-medium">{i.n}</div>
               <div className="text-slate-600 text-sm mt-1">{i.d}</div>
             </div>
@@ -121,7 +118,7 @@ export default function Landing() {
             { q: 'Meus dados são seguros?', a: 'Sim, usamos políticas RLS do Supabase para garantir acesso apenas do usuário.' },
             { q: 'Funciona no Android?', a: 'Sim, via Capacitor você pode gerar APK.' },
           ].map((f, i) => (
-            <details key={i} className="border rounded-lg bg-white">
+            <details key={i} className="border rounded-lg bg-[var(--bg-card)] shadow-sm">
               <summary className="px-4 py-3 cursor-pointer font-medium">{f.q}</summary>
               <div className="px-4 py-3 text-slate-600 text-sm">{f.a}</div>
             </details>

@@ -4,18 +4,19 @@ import { calculateHealthScore } from '../lib/healthScore'
 import AvatarDisplay, { type OrganKey } from '../components/AvatarDisplay'
 import { Link } from 'react-router-dom'
 import Button from '../components/ui/Button'
-import Card from '../components/ui/Card'
-import Section from '../components/ui/Section'
-import Tabs from '../components/ui/Tabs'
 import StatGauge from '../components/ui/StatGauge'
 import AlertDetailsPanel from '../components/AlertDetailsPanel'
 import { useMode } from '../context/ModeContext'
+import Modal from '../components/ui/Modal'
+import SideMenu from '../components/ui/SideMenu'
 
 export default function Dashboard() {
   const { user } = useAuth()
   const { mode, metrics, startMode, stopMode } = useMode()
   const [score, setScore] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState('heart')
+  const [timeTab, setTimeTab] = useState<'dia'|'semana'|'mes'>('dia')
+  const [alertsReady, setAlertsReady] = useState(false)
   const [alertKey, setAlertKey] = useState<string | null>(null)
   const [alertValue, setAlertValue] = useState<number | string | null>(null)
   const [selectedOrgan, setSelectedOrgan] = useState<OrganKey | null>(null)
@@ -27,6 +28,110 @@ export default function Dashboard() {
     metabolism: { count: 0, high: 0, medium: 0, low: 0 },
   })
 
+  // Estados de modais
+  const [activeModal, setActiveModal] = useState<string | null>(null)
+  const [showAlertModal, setShowAlertModal] = useState(false)
+
+
+  // Helpers de modal
+  function modalTitle(key: string | null) {
+    if (!key) return ''
+    const map: Record<string, string> = {
+      score: 'Health Score',
+      alertas: 'Alertas',
+      frequencia: 'Frequência',
+      acoes: 'Ações rápidas',
+      exames: 'Exames',
+    }
+    return map[key] ?? 'Detalhes'
+  }
+
+  function renderModalContent(key: string | null) {
+    if (!key) return null
+    if (key === 'score') {
+      return (
+        <div>
+          {score == null ? (
+            <div className="text-sm text-[var(--text-muted)]">Calculando seu score…</div>
+          ) : (
+            <>
+              <div className="text-5xl font-bold text-[var(--text)]">{score}</div>
+              <div className="mt-4 space-y-3">
+                <StatGauge label="Passos (hoje)" value={metrics.steps} min={0} max={10000} />
+                <StatGauge label="FC (bpm)" value={metrics.heartRate ?? 0} min={40} max={160} />
+              </div>
+              <div className="mt-4 flex gap-2">
+                {!mode ? (
+                  <>
+                    <Button variant="subtle" onClick={() => startMode('SONO')}>Modo Sono</Button>
+                    <Button variant="primary" onClick={() => startMode('ATLETA')}>Modo Atleta</Button>
+                    <Button variant="outline" onClick={() => startMode('REPOUSO')}>Modo Repouso</Button>
+                  </>
+                ) : (
+                  <Button variant="danger" onClick={stopMode}>Encerrar modo</Button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )
+    }
+    if (key === 'alertas') {
+      const organsWithAlerts = (Object.keys(availableOrgans) as OrganKey[]).filter(k => availableOrgans[k].count > 0)
+      return (
+        <div>
+          {organsWithAlerts.length === 0 ? (
+            <div className="text-sm text-[var(--text-muted)]">Sem alertas no momento</div>
+          ) : (
+            <ul className="space-y-2">
+              {organsWithAlerts.map((org) => (
+                <li key={org} className="flex items-center justify-between">
+                  <div className="font-medium">{organLabels[org]}</div>
+                  <div className="flex items-center gap-2">
+                    {(['high','medium','low'] as const).map((sev) => availableOrgans[org][sev] > 0 && (
+                      <span key={sev} className="inline-flex items-center px-2 py-0.5 text-xs border rounded">
+                        {sev}: {availableOrgans[org][sev]}
+                      </span>
+                    ))}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )
+    }
+    if (key === 'frequencia') {
+      return (
+        <div>
+          {metrics.heartRate != null ? (
+            <StatGauge label="Frequência Cardíaca" value={metrics.heartRate} min={40} max={160} />
+          ) : (
+            <div className="text-sm text-[var(--text-muted)]">Sem dados de frequência no momento.</div>
+          )}
+        </div>
+      )
+    }
+    if (key === 'acoes') {
+      return (
+        <div className="grid gap-3">
+          <Link to="/tracking"><Button full variant="subtle">Registrar hábitos</Button></Link>
+          <Link to="/exams"><Button full variant="outline">Adicionar exame</Button></Link>
+          <Link to="/profile"><Button full>Atualizar perfil</Button></Link>
+        </div>
+      )
+    }
+    if (key === 'exames') {
+      return (
+        <div>
+          <div className="text-sm text-[var(--text-muted)] mb-3">Gerencie seus exames e laudos.</div>
+          <Link to="/exams"><Button>Ir para Exames</Button></Link>
+        </div>
+      )
+    }
+    return null
+  }
+
   // Persistir seleção
   useEffect(() => {
     const saved = localStorage.getItem('selectedOrgan') as OrganKey | null
@@ -36,12 +141,6 @@ export default function Dashboard() {
     if (selectedOrgan) localStorage.setItem('selectedOrgan', selectedOrgan)
   }, [selectedOrgan])
 
-  const organs = [
-    { key: 'heart' as const, label: 'Coração' },
-    { key: 'brain' as const, label: 'Cérebro' },
-    { key: 'kidney' as const, label: 'Rins' },
-    { key: 'eyes' as const, label: 'Olhos' },
-  ]
 
   type Severity = 'low' | 'medium' | 'high'
 
@@ -69,14 +168,8 @@ export default function Dashboard() {
     load()
   }, [user])
 
-  useEffect(() => {
-    const saved = localStorage.getItem('selectedOrgan') as OrganKey | null
-    if (saved) setSelectedOrgan(saved)
-  }, [])
-
-  useEffect(() => {
-    if (selectedOrgan) localStorage.setItem('selectedOrgan', selectedOrgan)
-  }, [selectedOrgan])
+  // REMOVER efeitos duplicados de persistência
+  // (bloco duplicado foi eliminado)
 
   const organsWithAlerts = useMemo(() => (
     (Object.keys(availableOrgans) as OrganKey[]).filter(k => availableOrgans[k].count > 0)
@@ -95,116 +188,57 @@ export default function Dashboard() {
       acc[a.organ][a.severity] += 1
     })
     setAvailableOrgans(acc)
+    setAlertsReady(true)
+    return acc
   }
 
+  const totalAlerts = useMemo(() => (
+    (Object.keys(availableOrgans) as OrganKey[]).reduce((sum, k) => sum + availableOrgans[k].count, 0)
+  ), [availableOrgans])
+
+  const dailyGoalPct = useMemo(() => {
+    const goal = 10000
+    const pct = Math.round(Math.max(0, Math.min(100, (metrics.steps / goal) * 100)))
+    return pct
+  }, [metrics.steps])
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 space-y-8">
-      <Section
-        title="Dashboard"
-        description="Visão geral com mapa corporal, métricas e modos"
-        actions={(
-          <div className="flex gap-2">
-            <Link to="/tracking"><Button variant="outline" size="md">Tracking diário</Button></Link>
-            <Link to="/exams"><Button size="md">Adicionar exame</Button></Link>
+    <div className="min-h-screen bg-[var(--bg)]">
+      <div className="max-w-6xl mx-auto p-4 md:p-6">
+        <div className="grid md:grid-cols-[1fr_112px] gap-6 items-start">
+          <div className="flex items-center justify-center">
+            <AvatarDisplay
+              selectedOrgan={selectedOrgan}
+              onAlertClick={(k, v) => { setAlertKey(k); setAlertValue(v ?? null); setShowAlertModal(true) }}
+              onAlertsComputed={(alerts) => {
+                mapAlertsToOrgans(alerts)
+              }}
+            />
           </div>
+          <div>
+            <SideMenu
+              items={[
+                { key: 'score', label: 'Health Score', icon: '💯' },
+                { key: 'alertas', label: 'Alertas', icon: '⚠️' },
+                { key: 'frequencia', label: 'Frequência', icon: '❤️' },
+                { key: 'acoes', label: 'Ações', icon: '⚙️' },
+                { key: 'exames', label: 'Exames', icon: '🧪' },
+              ]}
+              onSelect={(k) => setActiveModal(k)}
+            />
+          </div>
+        </div>
+      </div>
+
+      <Modal open={!!activeModal} title={modalTitle(activeModal)} onClose={() => setActiveModal(null)}>
+        {renderModalContent(activeModal)}
+      </Modal>
+
+      <Modal open={showAlertModal} title="Detalhes do alerta" onClose={() => setShowAlertModal(false)}>
+        {alertKey && (
+          <AlertDetailsPanel alertKey={alertKey} value={alertValue} onClose={() => { setAlertKey(null); setShowAlertModal(false) }} />
         )}
-      >
-        {/* Navegação por categorias */}
-        <Tabs
-          items={[
-            { key: 'heart', label: 'Coração' },
-            { key: 'brain', label: 'Cérebro' },
-            { key: 'kidney', label: 'Rins' },
-            { key: 'eyes', label: 'Olhos' },
-          ]}
-          active={activeTab}
-          onChange={setActiveTab}
-        />
-
-        {/* Cards principais */}
-        <div className="grid md:grid-cols-3 gap-6 mt-4">
-          <Card title="Health Score" subtitle="Baseado em IMC, hábitos e glicose">
-            <div className="text-6xl font-bold text-primary">{score ?? '--'}</div>
-            <div className="mt-3 h-2 rounded-full bg-slate-200">
-              <div className="h-2 rounded-full bg-primary" style={{ width: `${(score ?? 0)}%` }} />
-            </div>
-            <div className="mt-4 space-y-3">
-              <StatGauge label="Passos (hoje)" value={metrics.steps} min={0} max={10000} />
-              <StatGauge label="FC (bpm)" value={metrics.heartRate ?? 0} min={40} max={160} />
-            </div>
-            <div className="mt-4 flex gap-2">
-              {!mode ? (
-                <>
-                  <Button variant="subtle" onClick={() => startMode('SONO')}>Modo Sono</Button>
-                  <Button variant="primary" onClick={() => startMode('ATLETA')}>Modo Atleta</Button>
-                  <Button variant="outline" onClick={() => startMode('REPOUSO')}>Modo Repouso</Button>
-                </>
-              ) : (
-                <Button variant="danger" onClick={stopMode}>Encerrar modo</Button>
-              )}
-            </div>
-          </Card>
-
-          <Card title="Mapa corporal" subtitle="Clique nos pontos ou no sumário à direita" className="md:col-span-2">
-            <div className="mt-2 grid md:grid-cols-2 gap-4">
-              <div className="flex items-center justify-center">
-                <AvatarDisplay
-                  selectedOrgan={selectedOrgan}
-                  onAlertClick={(k, v) => { setAlertKey(k); setAlertValue(v ?? null) }}
-                  onAlertsComputed={(alerts) => {
-                    const counts = mapAlertsToOrgans(alerts)
-                    if (selectedOrgan && counts[selectedOrgan] === 0) setSelectedOrgan(null)
-                  }}
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="text-sm text-[var(--text-muted)]">Sumário</div>
-                {organsWithAlerts.length === 0 ? (
-                  <div className="text-xs text-[var(--text-muted)]">Sem alertas no momento</div>
-                ) : (
-                  <ul className="space-y-2">
-                    {organsWithAlerts.map((org) => (
-                      <li key={org} className="flex items-center justify-between">
-                        <button className={`text-left hover:underline ${selectedOrgan === org ? 'text-primary' : 'text-slate-700'}`} onClick={() => setSelectedOrgan(org)}>
-                          {organLabels[org]}
-                        </button>
-                        <div className="flex items-center gap-2">
-                          {(['high', 'medium', 'low'] as (keyof typeof availableOrgans[OrganKey])[]).map((sev) => availableOrgans[org][sev] > 0 && (
-                            <span key={sev as string} title={`${availableOrgans[org][sev]} alerta(s) ${sev as string}`} className={`inline-flex items-center px-2 py-0.5 text-xs border rounded ${sev === 'high' ? 'bg-red-100 text-red-700 border-red-300' : sev === 'medium' ? 'bg-orange-100 text-orange-700 border-orange-300' : 'bg-amber-100 text-amber-700 border-amber-300'}`}>
-                              {availableOrgans[org][sev]}
-                            </span>
-                          ))}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-            {alertKey && (
-              <div className="mt-4">
-                <AlertDetailsPanel alertKey={alertKey} value={alertValue} onClose={() => setAlertKey(null)} />
-              </div>
-            )}
-          </Card>
-        </div>
-
-        {/* Ações e links úteis */}
-        <div className="grid md:grid-cols-3 gap-6">
-          {[
-            { t: 'Atualizar Perfil', d: 'Informe altura, peso, sexo e nascimento', to: '/profile' },
-            { t: 'Registrar hábitos', d: 'Passos, sono e frequência cardíaca', to: '/tracking' },
-            { t: 'Meus exames', d: 'Adicione laudos e valores com unidade', to: '/exams' },
-          ].map((i, idx) => (
-            <Link key={idx} to={i.to}>
-              <Card>
-                <div className="font-medium">{i.t}</div>
-                <div className="text-slate-600 text-sm">{i.d}</div>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      </Section>
+      </Modal>
     </div>
   )
 }

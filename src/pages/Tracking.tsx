@@ -48,7 +48,7 @@ export default function Tracking() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="min-h-screen bg-[var(--bg)] max-w-2xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-2xl font-semibold">Tracking diário</h2>
@@ -62,23 +62,23 @@ export default function Tracking() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6">
+      <form onSubmit={handleSubmit} className="space-y-5 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
         <div className="grid md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm mb-1">Data</label>
-            <input type="date" value={data} onChange={(e) => setData(e.target.value)} className="w-full border rounded-lg p-2.5" />
+            <input type="date" value={data} onChange={(e) => setData(e.target.value)} className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-[var(--primary)]/40" />
           </div>
           <div>
             <label className="block text-sm mb-1">Passos</label>
-            <input type="number" min={0} value={passos} onChange={(e) => setPassos(e.target.value ? Number(e.target.value) : '')} className="w-full border rounded-lg p-2.5" />
+            <input type="number" min={0} value={passos} onChange={(e) => setPassos(e.target.value ? Number(e.target.value) : '')} className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-[var(--primary)]/40" />
           </div>
           <div>
             <label className="block text-sm mb-1">Horas de Sono</label>
-            <input type="number" min={0} step={0.1} value={sono} onChange={(e) => setSono(e.target.value ? Number(e.target.value) : '')} className="w-full border rounded-lg p-2.5" />
+            <input type="number" min={0} step={0.1} value={sono} onChange={(e) => setSono(e.target.value ? Number(e.target.value) : '')} className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-[var(--primary)]/40" />
           </div>
           <div>
             <label className="block text-sm mb-1">Frequência Cardíaca (bpm)</label>
-            <input type="number" min={0} value={freq} onChange={(e) => setFreq(e.target.value ? Number(e.target.value) : '')} className="w-full border rounded-lg p-2.5" />
+            <input type="number" min={0} value={freq} onChange={(e) => setFreq(e.target.value ? Number(e.target.value) : '')} className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-[var(--primary)]/40" />
           </div>
         </div>
         <button className="w-full bg-[var(--primary)] text-[var(--primary-contrast)] rounded-lg p-2.5 hover:bg-[var(--color-primary-dark)]">Salvar</button>

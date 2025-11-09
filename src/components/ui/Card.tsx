@@ -9,7 +9,7 @@ type CardProps = {
 
 export default function Card({ title, subtitle, children, className = '' }: CardProps) {
   return (
-    <div className={["p-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-sm", className].join(' ')}>
+    <div className={["p-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-sm hover:shadow-md transition-shadow", className].join(' ')}>
       {(title || subtitle) && (
         <div className="mb-3">
           {title && <div className="text-[var(--text)] font-medium">{title}</div>}

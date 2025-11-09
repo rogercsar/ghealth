@@ -13,7 +13,7 @@ const colorMap: Record<string, string> = {
 
 export default function Widget({ title, value, color = 'primary' }: WidgetProps) {
   return (
-    <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)]">
+    <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-sm">
       <div className="text-xs text-[var(--text-muted)]">{title}</div>
       <div className={`mt-1 inline-flex items-center gap-2 px-2 py-1 rounded-lg ${colorMap[color]}`}>
         <span className="text-sm font-semibold">{value}</span>

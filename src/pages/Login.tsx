@@ -20,8 +20,8 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-sm p-6">
+    <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-sm hover:shadow-md transition-shadow p-6">
         <div className="text-center">
           <div className="inline-flex h-10 w-10 rounded-xl bg-primary mb-2" />
           <h2 className="text-2xl font-semibold">Bem-vindo ao GHealth</h2>
@@ -42,7 +42,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@email.com"
-              className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary/40"
+              className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-[var(--primary)]/40"
               required
             />
           </div>
@@ -53,7 +53,7 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-primary/40"
+              className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-[var(--primary)]/40"
               required
             />
           </div>

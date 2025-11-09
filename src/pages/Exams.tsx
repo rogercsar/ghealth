@@ -119,7 +119,10 @@ export default function Exams() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
+      >
         <div className="grid md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm mb-1">Tipo de exame</label>
@@ -128,7 +131,7 @@ export default function Exams() {
               value={tipo}
               onChange={(e) => setTipo(e.target.value)}
               placeholder="Ex: Glicose em jejum"
-              className="w-full border rounded-lg p-2.5"
+              className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-[var(--primary)]/40"
               required
             />
           </div>
@@ -140,7 +143,7 @@ export default function Exams() {
               value={valor}
               onChange={(e) => setValor(e.target.value ? Number(e.target.value) : '')}
               placeholder="Ex: 92.5"
-              className="w-full border rounded-lg p-2.5"
+              className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-[var(--primary)]/40"
             />
           </div>
           <div>
@@ -150,7 +153,7 @@ export default function Exams() {
               value={unidade}
               onChange={(e) => setUnidade(e.target.value)}
               placeholder="Ex: mg/dL"
-              className="w-full border rounded-lg p-2.5"
+              className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-[var(--primary)]/40"
             />
           </div>
           <div>
@@ -159,7 +162,7 @@ export default function Exams() {
               type="date"
               value={dataExame}
               onChange={(e) => setDataExame(e.target.value)}
-              className="w-full border rounded-lg p-2.5"
+              className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-[var(--primary)]/40"
             />
           </div>
         </div>
@@ -167,7 +170,7 @@ export default function Exams() {
         <div>
           <label className="block text-sm mb-2">Upload de Laudo (PDF/JPG)</label>
           <div className="flex items-center gap-3">
-            <label className="flex-1 cursor-pointer rounded-lg border border-dashed p-4 text-sm text-slate-600 hover:bg-slate-50">
+            <label className="flex-1 cursor-pointer rounded-lg border border-dashed p-4 text-sm text-slate-600 hover:bg-[var(--bg-muted)]">
               <input
                 type="file"
                 accept="application/pdf,image/*"
@@ -176,7 +179,7 @@ export default function Exams() {
               />
               <div className="flex items-center justify-between">
                 <span>{file ? file.name : 'Selecione um arquivo para enviar'}</span>
-                <span className="px-3 py-1 rounded bg-slate-100 text-slate-700">Escolher</span>
+                <span className="px-3 py-1 rounded bg-[var(--bg-muted)] text-[var(--text)]">Escolher</span>
               </div>
             </label>
           </div>
@@ -203,28 +206,33 @@ export default function Exams() {
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-6 text-[var(--text-muted)] text-sm">Nenhum exame cadastrado ainda.</div>
         ) : (
           <div className="grid gap-4">
-            {records.map((r) => (
-              <div key={r.id} className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5 flex items-start justify-between">
-                <div>
-                  <div className="font-medium">{r.tipo_exame}</div>
-                  <div className="text-slate-600 text-sm">
-                    {r.valor ?? '—'} {r.unidade ?? ''} • {fmtDate(r.data_exame)}
+            <div className="mt-6 space-y-4">
+              {records.map((r) => (
+                <div
+                  key={r.id}
+                  className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div>
+                    <div className="font-medium">{r.tipo_exame}</div>
+                    <div className="text-slate-600 text-sm">
+                      {r.valor ?? '—'} {r.unidade ?? ''} • {fmtDate(r.data_exame)}
+                    </div>
                   </div>
+                  {r.arquivo_url ? (
+                    <a
+                      href={r.arquivo_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3 py-2 rounded border hover:bg-[var(--bg-muted)] text-sm"
+                    >
+                      Ver arquivo
+                    </a>
+                  ) : (
+                    <span className="text-slate-500 text-xs">Sem laudo</span>
+                  )}
                 </div>
-                {r.arquivo_url ? (
-                  <a
-                    href={r.arquivo_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3 py-2 rounded border hover:bg-slate-100 text-sm"
-                  >
-                    Ver arquivo
-                  </a>
-                ) : (
-                  <span className="text-slate-500 text-xs">Sem laudo</span>
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>
