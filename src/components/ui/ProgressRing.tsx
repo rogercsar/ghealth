@@ -1,5 +1,3 @@
-import React from 'react'
-
 type ProgressRingProps = {
   size?: number
   stroke?: number

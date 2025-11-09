@@ -1,5 +1,3 @@
-import React from 'react'
-
 type SkeletonProps = {
   width?: number | string
   height?: number

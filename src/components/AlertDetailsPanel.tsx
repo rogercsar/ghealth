@@ -1,5 +1,4 @@
 import Card from './ui/Card'
-import React from 'react'
 
 export type AlertInfo = {
   key: string

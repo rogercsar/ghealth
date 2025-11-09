@@ -1,6 +1,6 @@
-import React from 'react'
+import type { ReactNode } from 'react'
 
-type Item = { key: string; label: string; icon?: React.ReactNode }
+type Item = { key: string; label: string; icon?: ReactNode }
 
 type SideMenuProps = {
   items: Item[]

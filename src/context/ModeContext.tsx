@@ -58,7 +58,7 @@ export function ModeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [mode, sensors])
 
-  async function persistTracking(finalize = false) {
+  async function persistTracking() {
     if (!user) return
     const today = new Date()
     const dateStr = today.toISOString().slice(0, 10)
@@ -79,7 +79,7 @@ export function ModeProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function stopMode() {
-    await persistTracking(true)
+    await persistTracking()
     setMode(null)
     setMetrics({ steps: 0, heartRate: null, pressureSys: null, pressureDia: null, calories: null, startedAt: null })
   }

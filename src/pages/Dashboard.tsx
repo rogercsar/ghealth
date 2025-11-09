@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { calculateHealthScore } from '../lib/healthScore'
 import AvatarDisplay, { type OrganKey } from '../components/AvatarDisplay'
@@ -14,10 +14,7 @@ export default function Dashboard() {
   const { user } = useAuth()
   const { mode, metrics, startMode, stopMode } = useMode()
   const [score, setScore] = useState<number | null>(null)
-  const [activeTab, setActiveTab] = useState('heart')
-  const [timeTab, setTimeTab] = useState<'dia'|'semana'|'mes'>('dia')
-  const [alertsReady, setAlertsReady] = useState(false)
-  const [alertKey, setAlertKey] = useState<string | null>(null)
+        const [alertKey, setAlertKey] = useState<string | null>(null)
   const [alertValue, setAlertValue] = useState<number | string | null>(null)
   const [selectedOrgan, setSelectedOrgan] = useState<OrganKey | null>(null)
   const [availableOrgans, setAvailableOrgans] = useState<Record<OrganKey, { count: number; high: number; medium: number; low: number }>>({
@@ -142,14 +139,6 @@ export default function Dashboard() {
   }, [selectedOrgan])
 
 
-  type Severity = 'low' | 'medium' | 'high'
-
-  const severityBadgeClasses: Record<Severity, string> = {
-    low: 'bg-amber-100 text-amber-700 border-amber-300',
-    medium: 'bg-orange-100 text-orange-700 border-orange-300',
-    high: 'bg-red-100 text-red-700 border-red-300',
-  }
-
   const organLabels: Record<OrganKey, string> = {
     heart: 'Coração',
     brain: 'Cérebro',
@@ -171,11 +160,9 @@ export default function Dashboard() {
   // REMOVER efeitos duplicados de persistência
   // (bloco duplicado foi eliminado)
 
-  const organsWithAlerts = useMemo(() => (
-    (Object.keys(availableOrgans) as OrganKey[]).filter(k => availableOrgans[k].count > 0)
-  ), [availableOrgans])
+// Removi estados/variáveis não utilizadas (activeTab, timeTab, alertsReady, severityBadgeClasses, organsWithAlerts, totalAlerts, dailyGoalPct)
 
-  function mapAlertsToOrgans(alerts: { organ: OrganKey; severity: Severity; label: string }[]) {
+  function mapAlertsToOrgans(alerts: { organ: OrganKey; severity: 'low' | 'medium' | 'high'; label: string }[]) {
     const acc: Record<OrganKey, { count: number; high: number; medium: number; low: number }> = {
       heart: { count: 0, high: 0, medium: 0, low: 0 },
       brain: { count: 0, high: 0, medium: 0, low: 0 },
@@ -188,19 +175,10 @@ export default function Dashboard() {
       acc[a.organ][a.severity] += 1
     })
     setAvailableOrgans(acc)
-    setAlertsReady(true)
     return acc
   }
 
-  const totalAlerts = useMemo(() => (
-    (Object.keys(availableOrgans) as OrganKey[]).reduce((sum, k) => sum + availableOrgans[k].count, 0)
-  ), [availableOrgans])
 
-  const dailyGoalPct = useMemo(() => {
-    const goal = 10000
-    const pct = Math.round(Math.max(0, Math.min(100, (metrics.steps / goal) * 100)))
-    return pct
-  }, [metrics.steps])
 
   return (
     <div className="min-h-screen bg-[var(--bg)]">

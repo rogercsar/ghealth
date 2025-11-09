@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../auth/AuthContext'
 
@@ -30,6 +30,7 @@ function severityColor(s: Severity) {
 }
 
 function computeExamSeverity(label: string, value: number | null, unit: string | null, sexo: string | null): Severity | null {
+  void unit
   const v = value ?? 0
   const l = label.toLowerCase()
   if (l.includes('glicose') || l.includes('glucose')) {
@@ -114,7 +115,7 @@ function BackSilhouette() {
   )
 }
 
-export default function AvatarDisplay({ selectedOrgan, onAlertClick, onAlertsComputed }: { selectedOrgan?: any; onAlertClick?: (k: string, v?: number | null) => void; onAlertsComputed?: (alerts: any[]) => void }) {
+export default function AvatarDisplay({ selectedOrgan, onAlertClick, onAlertsComputed }: { selectedOrgan?: OrganKey | null; onAlertClick?: (k: string, v?: number | null) => void; onAlertsComputed?: (alerts: AlertPoint[]) => void }) {
   const { user } = useAuth()
   const [records, setRecords] = useState<RecordItem[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
