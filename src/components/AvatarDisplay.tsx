@@ -97,21 +97,42 @@ function regionForExam(tipo: string) {
   return { x: 110, y: 220 }
 }
 
+function SilhouetteMedia({ imgSrc, videoSrc }: { imgSrc: string; videoSrc?: string }) {
+  const [useVideo, setUseVideo] = useState<boolean>(!!videoSrc)
+  return useVideo && videoSrc ? (
+    <foreignObject x={0} y={0} width={220} height={320}>
+      <video
+        src={videoSrc}
+        autoPlay
+        loop
+        muted
+        playsInline
+        width={220}
+        height={320}
+        style={{ filter: 'contrast(1.25) saturate(1.2) brightness(1.05)', pointerEvents: 'none', objectFit: 'contain' }}
+        onError={() => setUseVideo(false)}
+      />
+    </foreignObject>
+  ) : (
+    <image href={imgSrc} x={0} y={0} width={220} height={320} preserveAspectRatio="xMidYMid meet" style={{ filter: 'contrast(1.25) saturate(1.2) brightness(1.05)' }} />
+  )
+}
+
 function MaleSilhouette() {
   return (
-    <image href="/corpo.png" x={0} y={0} width={220} height={320} preserveAspectRatio="xMidYMid meet" style={{ filter: 'contrast(1.25) saturate(1.2) brightness(1.05)' }} />
+    <SilhouetteMedia imgSrc="/corpo.png" videoSrc="/corpo_breathing.mp4" />
   )
 }
 
 function FemaleSilhouette() {
   return (
-    <image href="/corpo.png" x={0} y={0} width={220} height={320} preserveAspectRatio="xMidYMid meet" style={{ filter: 'contrast(1.25) saturate(1.2) brightness(1.05)' }} />
+    <SilhouetteMedia imgSrc="/corpo.png" videoSrc="/corpo_breathing.mp4" />
   )
 }
 
 function BackSilhouette() {
   return (
-    <image href="/corpo_costas.png" x={0} y={0} width={220} height={320} preserveAspectRatio="xMidYMid meet" style={{ filter: 'contrast(1.25) saturate(1.2) brightness(1.05)' }} />
+    <SilhouetteMedia imgSrc="/corpo_costas.png" videoSrc="/corpo_costas_breathing.mp4" />
   )
 }
 
@@ -235,15 +256,36 @@ export default function AvatarDisplay({ selectedOrgan, onAlertClick, onAlertsCom
 
           {/* Pontos frente (alerts dinâmicos) */}
           <g className={`transition-opacity ${showBack ? 'opacity-0' : 'opacity-100'}`}>
-            {Object.entries(alerts.reduce((acc, a) => {
-              const key = a.label
-              ;(acc[key] ||= []).push(a)
-              return acc
-            }, {} as Record<string, AlertPoint[]>)).map(([label, group], gi) => {
-              if (label === 'Passos' && group.length > 1) {
-                const anchor = group[1] || group[0]
-                const labelX = 200
-                const labelY = Math.round((group[0].y + group[group.length - 1].y) / 2) - 8
+            {(() => {
+              const placedLeftY: number[] = []
+              const placedRightY: number[] = []
+              const minGap = 14
+              return Object.entries(alerts.reduce((acc, a) => {
+                const key = a.label
+                ;(acc[key] ||= []).push(a)
+                return acc
+              }, {} as Record<string, AlertPoint[]>)).map(([label, group], gi) => {
+                const multi = group.length > 1
+                const anchor = multi ? group[Math.min(1, group.length - 1)] : group[0]
+                const avgY = Math.round(group.reduce((sum, g) => sum + g.y, 0) / group.length)
+                const preferLeft = avgY <= 100 || label === 'Sono'
+                let useLeft = preferLeft
+                let candidateY = (anchor?.y ?? avgY) - 6
+                const collides = (list: number[]) => list.some(y => Math.abs(y - candidateY) < minGap)
+                // tenta alternar lado se colidir no lado preferido
+                if (useLeft ? collides(placedLeftY) : collides(placedRightY)) {
+                  useLeft = !useLeft
+                }
+                // se ainda colidir, ajusta Y incrementalmente
+                let attempts = 0
+                while ((useLeft ? collides(placedLeftY) : collides(placedRightY)) && attempts < 3) {
+                  candidateY += attempts % 2 === 0 ? minGap : -minGap
+                  attempts++
+                }
+                const labelX = useLeft ? 30 : 200
+                const labelY = candidateY
+                ;(useLeft ? placedLeftY : placedRightY).push(labelY)
+
                 return (
                   <g key={`grp-${label}-${gi}`}>
                     {group.map((a, idx) => (
@@ -260,47 +302,59 @@ export default function AvatarDisplay({ selectedOrgan, onAlertClick, onAlertsCom
                     <text x={labelX + 4} y={labelY} fontSize="10" fill="#334155">{label}</text>
                   </g>
                 )
-              }
-              if (label === 'Sono' && group.length >= 1) {
-                const a = group[0]
-                const labelX = 30
-                const labelY = a.y - 6
-                return (
-                  <g key={`grp-${label}-${gi}`}>
-                    <g onClick={() => onAlertClick?.(a.label, a.value)} className="cursor-pointer">
-                      <circle cx={a.x} cy={a.y} r="4" fill={a.color}>
-                        <animate attributeName="opacity" values="1;0.5;1" dur="1.2s" repeatCount="indefinite" />
-                      </circle>
-                      <circle cx={a.x} cy={a.y} r="8" fill={a.color} opacity="0.12">
-                        <animate attributeName="r" values="8;12;8" dur="1.6s" repeatCount="indefinite" />
-                      </circle>
-                    </g>
-                    <line x1={a.x} y1={a.y} x2={labelX} y2={labelY} stroke="#64748b" strokeWidth="1" strokeDasharray="2,2" />
-                    <text x={labelX + 4} y={labelY} fontSize="10" fill="#334155">{label}</text>
-                  </g>
-                )
-              }
-              return group.map((a, idx) => (
-                <g key={`single-${label}-${idx}`} onClick={() => onAlertClick?.(a.label, a.value)} className="cursor-pointer">
-                  <circle cx={a.x} cy={a.y} r="4" fill={a.color}>
-                    <animate attributeName="opacity" values="1;0.5;1" dur="1.2s" repeatCount="indefinite" />
-                  </circle>
-                  <circle cx={a.x} cy={a.y} r="8" fill={a.color} opacity="0.12">
-                    <animate attributeName="r" values="8;12;8" dur="1.6s" repeatCount="indefinite" />
-                  </circle>
-                  <text x={a.x + 10} y={a.y - 8} fontSize="10" fill="#334155">{a.label}</text>
-                </g>
-              ))
-            })}
+              })
+            })()}
           </g>
 
-          {/* Pontos das costas (mostrados durante rotação) */}
+          {/* Pontos das costas (alerts dinâmicos) */}
           {showBack && (
-            <g>
-              <circle cx={120} cy={110} r="6" fill="var(--accent)" />
-              <circle cx={120} cy={170} r="6" fill="var(--accent)" />
-              <circle cx={110} cy={210} r="6" fill="var(--accent)" />
-              <circle cx={130} cy={210} r="6" fill="var(--accent)" />
+            <g className="transition-opacity opacity-100">
+              {(() => {
+                const placedLeftY: number[] = []
+                const placedRightY: number[] = []
+                const minGap = 14
+                return Object.entries(alerts.reduce((acc, a) => {
+                  const key = a.label
+                  ;(acc[key] ||= []).push(a)
+                  return acc
+                }, {} as Record<string, AlertPoint[]>)).map(([label, group], gi) => {
+                  const multi = group.length > 1
+                  const anchor = multi ? group[Math.min(1, group.length - 1)] : group[0]
+                  const avgY = Math.round(group.reduce((sum, g) => sum + g.y, 0) / group.length)
+                  const preferLeft = avgY <= 100 || label === 'Sono'
+                  let useLeft = preferLeft
+                  let candidateY = (anchor?.y ?? avgY) - 6
+                  const collides = (list: number[]) => list.some(y => Math.abs(y - candidateY) < minGap)
+                  if (useLeft ? collides(placedLeftY) : collides(placedRightY)) {
+                    useLeft = !useLeft
+                  }
+                  let attempts = 0
+                  while ((useLeft ? collides(placedLeftY) : collides(placedRightY)) && attempts < 3) {
+                    candidateY += attempts % 2 === 0 ? minGap : -minGap
+                    attempts++
+                  }
+                  const labelX = useLeft ? 30 : 200
+                  const labelY = candidateY
+                  ;(useLeft ? placedLeftY : placedRightY).push(labelY)
+
+                  return (
+                    <g key={`back-${label}-${gi}`}>
+                      {group.map((a, idx) => (
+                        <g key={`back-pt-${label}-${idx}`} onClick={() => onAlertClick?.(a.label, a.value)} className="cursor-pointer">
+                          <circle cx={a.x} cy={a.y} r="4" fill={a.color}>
+                            <animate attributeName="opacity" values="1;0.5;1" dur="1.2s" repeatCount="indefinite" />
+                          </circle>
+                          <circle cx={a.x} cy={a.y} r="8" fill={a.color} opacity="0.12">
+                            <animate attributeName="r" values="8;12;8" dur="1.6s" repeatCount="indefinite" />
+                          </circle>
+                        </g>
+                      ))}
+                      <line x1={anchor.x} y1={anchor.y} x2={labelX} y2={labelY} stroke="#64748b" strokeWidth="1" strokeDasharray="2,2" />
+                      <text x={labelX + 4} y={labelY} fontSize="10" fill="#334155">{label}</text>
+                    </g>
+                  )
+                })
+              })()}
             </g>
           )}
         </svg>
